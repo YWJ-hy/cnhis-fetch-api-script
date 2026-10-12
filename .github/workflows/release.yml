@@ -50,6 +50,7 @@ jobs:
       - name: Tag published version (also repairs a post-publish workflow failure)
         env:
           VERSION: ${{ steps.prepare.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           # npm can acknowledge publishing before the new version is queryable.
           PUBLISHED_COMMIT=''
@@ -59,9 +60,7 @@ jobs:
             sleep 10
           done
           test -n "$PUBLISHED_COMMIT"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          if ! git rev-parse "refs/tags/v$VERSION" >/dev/null 2>&1; then
-            git tag -a "v$VERSION" "$PUBLISHED_COMMIT" -m "发布 v$VERSION"
+          if ! gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$VERSION" >/dev/null 2>&1; then
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+              -f "ref=refs/tags/v$VERSION" -f "sha=$PUBLISHED_COMMIT"
           fi
-          git push origin "refs/tags/v$VERSION"
