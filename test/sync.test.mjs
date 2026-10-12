@@ -235,3 +235,63 @@ test("URL requirements, unmatched URL cleanup and fetch failures", async t => {
     /503 Unavailable/,
   );
 });
+
+test("generated Swagger and Apifox services preserve responses and original errors", async t => {
+  for (const source of ["swagger", "apifox"]) {
+    for (const withOptions of [false, true]) {
+      const f = await fixture(t, {
+        httpImport: "../../../http.ts",
+        ...(withOptions ? { requestOptions } : {}),
+      });
+      await f.run(source, [{ paths: {
+        "/alpha/items/query": { get: operation(), post: { responses: {} } },
+      } }]);
+      // Node strips inline TypeScript but does not elide declaration-only imports like a bundler.
+      const index = await f.read("generated/alpha/items/index.ts");
+      await f.write("generated/alpha/items/index.ts", index.replace(
+        /import \{[^}]*\} from ["']\.\/types["'];?/g,
+        "",
+      ));
+      await f.write("package.json", JSON.stringify({ type: "module" }));
+      await f.write("http.ts", `
+        export type AxiosRequestConfig = {};
+        export type OtherConfig = {};
+        let invoke: () => Promise<{ success: boolean; data: unknown; msg: string }>;
+        export const setInvoke = (fn: typeof invoke) => { invoke = fn; };
+        const request = <T>(...args: unknown[]) => invoke();
+        export default { get: request, post: request };
+      `);
+      await f.write("check.mjs", `
+        import assert from "node:assert/strict";
+        import { setInvoke } from "./http.ts";
+        import { QueryGet, QueryPost } from "./generated/alpha/items/index.ts";
+        for (const call of [QueryGet, QueryPost]) {
+          for (const success of [true, false]) {
+            const response = { success, data: { id: 1 }, msg: "response message" };
+            setInvoke(async () => response);
+            const result = await call({ id: 1 });
+            assert.deepEqual(result, { ...response, error: null });
+            assert.equal(result.data, response.data);
+          }
+          const cases = [
+            [{ msg: "business failure", message: "fallback", data: 123 }, "business failure"],
+            [new Error("network failure"), "network failure"],
+            [{ msg: 123, message: "fallback" }, "fallback"],
+            [{ msg: "", message: "fallback" }, ""],
+            ["string rejection", "string rejection"],
+            [null, ""], [undefined, ""], [42, ""], [{}, ""],
+          ];
+          for (const [error, msg] of cases) {
+            setInvoke(async () => { throw error; });
+            const result = await call({ id: 1 });
+            assert.deepEqual(result, { success: false, data: null, msg, error });
+            assert.equal(result.error, error);
+          }
+        }
+      `);
+      await execFileAsync(process.execPath, ["--experimental-strip-types", "check.mjs"], {
+        cwd: f.root,
+      });
+    }
+  }
+});

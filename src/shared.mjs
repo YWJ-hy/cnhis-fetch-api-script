@@ -252,15 +252,28 @@ const renderIndexFunctions = (moduleEndpoints, endpointTypes, requestOptions) =>
       method === "get"
         ? `http.get<${resultTypeName}>("${url}", ${paramsSchema ? "params" : "undefined"}${requestArgsText})`
         : `http.post<${resultTypeName}>("${url}", ${paramsSchema ? "params" : "undefined"}${requestArgsText})`;
-    lines.push(`    const { success, data } = await ${httpCall};`);
+    lines.push(`    const { success, data, msg } = await ${httpCall};`);
     lines.push("    return {");
     lines.push("      success,");
     lines.push("      data,");
+    lines.push("      msg,");
+    lines.push("      error: null,");
     lines.push("    };");
-    lines.push("  } catch {");
+    lines.push("  } catch (error) {");
+    lines.push('    const msg = typeof error === "string"');
+    lines.push("      ? error");
+    lines.push('      : error && typeof error === "object"');
+    lines.push('        ? "msg" in error && typeof error.msg === "string"');
+    lines.push("          ? error.msg");
+    lines.push('          : "message" in error && typeof error.message === "string"');
+    lines.push("            ? error.message");
+    lines.push('            : ""');
+    lines.push('        : "";');
     lines.push("    return {");
     lines.push("      success: false,");
     lines.push("      data: null,");
+    lines.push("      msg,");
+    lines.push("      error,");
     lines.push("    };");
     lines.push("  }");
     lines.push("};");

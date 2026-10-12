@@ -26,7 +26,7 @@ npx cnhis-fetch-api init
 
 `init` 在使用方项目根目录创建固定名称的 `fetch-api-setting.json`，包含每个配置项的用途和默认值；已有文件不会覆盖。也可复制仓库中的 [完整注释样例](./fetch-api-setting.example.json) 并改为该文件名。配置不存在或格式错误时退出。Apifox token 可使用 `APIFOX_TOKEN` 环境变量提供。
 
-运行环境为 Node.js 22.13+（22 系列）或 24+，交互使用 Inquirer。目标项目需提供 `httpImport` 指定的默认导出（包含 `get` / `post` 方法，返回 `{ success, data }`）、全局 `Nullable<T>` 和 `ObjectType` 类型，以及 `formatter` 指定的格式化工具。
+运行环境为 Node.js 22.13+（22 系列）或 24+，交互使用 Inquirer。目标项目需提供 `httpImport` 指定的默认导出（包含 `get` / `post` 方法，返回 `{ success, data, msg }`）、全局 `Nullable<T>` 和 `ObjectType` 类型，以及 `formatter` 指定的格式化工具。
 
 ## 使用
 
@@ -150,6 +150,13 @@ npx cnhis-fetch-api swagger --cwd ../another-project --url /catalog/items/query
 启用 `requestOptions` 后，生成的函数接收可选配置，并按顺序透传至 `http.get/post(url, params, config, otherConfig)`。没有业务入参时第二个 HTTP 参数为 `undefined`。类型应为指定模块导出的类型名称。不需要额外参数时可关闭或省略该配置；关闭后要立即移除已有函数上的透传参数，可用 `--url` 更新对应接口。
 
 ## 类型生成与支持范围
+
+生成的 service 函数返回 `{ success, data, msg, error }`：
+
+- HTTP 请求正常返回时，保留响应的 `success`、`data`、`msg`，并设置 `error: null`。响应为 `success: false` 时也遵循此规则。
+- HTTP 请求抛出异常时，返回 `success: false`、`data: null`，`error` 保留原始异常。`msg` 优先使用异常对象的字符串 `msg`，其次使用字符串 `message`；字符串异常直接作为 `msg`，其他情况为 `""`。
+
+已有函数仍按原有同步规则更新，不会仅因返回结构变化而自动升级。需要统一采用新结构时，可删除对应的生成文件后重新生成；删除前请保留自定义代码。
 
 支持 Swagger definitions / OpenAPI components.schemas 引用、对象、数组、枚举、字典、组合类型、可选字段 `Nullable`、嵌套 namespace、响应 `data` 提取，以及入参 `map` / `userRoleResource` 过滤。递归引用在循环处停止展开，同级重复引用独立展开。整数无 format 或 format 为 int32 时生成 number，其他非空 format 生成 string。
 
