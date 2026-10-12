@@ -1,6 +1,8 @@
 {
   // 配置文件支持 // 和 /* */ 注释，不支持尾随逗号。
-  // 将本文件复制为使用项目根目录的 fetch-api-setting.json，或执行 cnhis-fetch-api init。
+  // 将本文件复制为使用项目根目录的 fetch-api-setting.json。
+  // 未安装时可运行 npx --yes --registry=https://registry.npmjs.org cnhis-fetch-api-script@latest init。
+  // 已安装到项目依赖时可运行 npx cnhis-fetch-api init。
 
   // 是否剥离 URL 上下文作为输出目录。默认 false。
   // false: /catalog/items/query -> catalog/items；true 且匹配 catalog 上下文时 -> items。

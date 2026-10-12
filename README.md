@@ -2,7 +2,22 @@
 
 从 Swagger 或 Apifox 获取接口定义，按模块生成 TypeScript 请求函数和类型声明。
 
-## 安装
+## 运行方式
+
+包名为 `cnhis-fetch-api-script`，安装后提供的命令名为 `cnhis-fetch-api`。以下两种方式任选其一。
+
+### 不安装到项目依赖
+
+在使用方项目根目录执行：
+
+```sh
+npx --yes --registry=https://registry.npmjs.org cnhis-fetch-api-script@latest init
+npx --yes --registry=https://registry.npmjs.org cnhis-fetch-api-script@latest apifox --url /catalog/items/query
+```
+
+`npx` 将包下载到 npm 缓存并执行，不会添加到项目的 package.json。`@latest` 选择最新版本；需要固定版本时替换为具体版本号。未安装时请使用包名 `cnhis-fetch-api-script`，不要使用 `npx cnhis-fetch-api`，否则 npm 会尝试查找另一个同名包。
+
+### 安装到项目依赖
 
 ```sh
 npm install -D cnhis-fetch-api-script --registry=https://registry.npmjs.org
@@ -15,7 +30,7 @@ npx cnhis-fetch-api init
 
 ## 使用
 
-在项目根目录运行（使用项目要求的 Node.js 版本）：
+以下简写命令要求先按上文安装到项目依赖中。在项目根目录运行（Node.js 22 或更高版本）：
 
 ```sh
 npx cnhis-fetch-api swagger --url /catalog/items/query
@@ -23,6 +38,8 @@ npx cnhis-fetch-api apifox --url /catalog/items/query --url /catalog/items/save
 npx cnhis-fetch-api apifox --url /catalog/items/query --keep-api-json
 npx cnhis-fetch-api swagger --cwd ../another-project --url /catalog/items/query
 ```
+
+若未安装到项目依赖，将上述命令中的 `npx cnhis-fetch-api` 替换为 `npx --yes --registry=https://registry.npmjs.org cnhis-fetch-api-script@latest`，其余子命令和参数保持一致。
 
 默认把当前工作目录作为项目根目录，请在使用方项目根目录执行；从其他位置执行时使用 `--cwd` 指定项目根目录。配置只读取该目录的 `fetch-api-setting.json`，文件名不可通过参数更改。输出、`api.json`、格式化命令的工作目录也基于该项目根目录。可在使用项目的 package.json 中配置 `"api:apifox": "cnhis-fetch-api apifox"`。
 

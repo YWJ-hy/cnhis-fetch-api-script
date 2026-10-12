@@ -6,6 +6,11 @@ import path from "node:path";
 const args = process.argv.slice(2);
 const help = `cnhis-fetch-api <swagger|apifox|init> [options]
 
+Without a local installation:
+  npx --yes --registry=https://registry.npmjs.org cnhis-fetch-api-script@latest <command> [options]
+After installing cnhis-fetch-api-script in your project:
+  npx cnhis-fetch-api <command> [options]
+
   --url <path>       Sync a complete API path (repeatable)
   --cwd <directory>  Project root (defaults to current directory)
   --keep-api-json    Keep downloaded API definitions
