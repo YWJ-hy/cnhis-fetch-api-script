@@ -1,0 +1,61 @@
+name: Release npm
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'bin/**'
+      - 'settings.example.json'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+permissions:
+  contents: write
+  id-token: write
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install -g npm@11.16.0
+      - run: npm ci
+      - run: npm test
+      - id: prepare
+        run: npm run release:prepare
+      - name: Commit automatic version
+        if: steps.prepare.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.prepare.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "发布：自动升级版本至 $VERSION"
+          fi
+          # A concurrent push fails here before publishing; rerun against latest main.
+          git push origin HEAD:main
+      - name: Publish through npm trusted publishing
+        if: steps.prepare.outputs.publish == 'true'
+        run: npm publish --provenance
+      - name: Tag published version (also repairs a post-publish workflow failure)
+        env:
+          VERSION: ${{ steps.prepare.outputs.version }}
+        run: |
+          PUBLISHED_COMMIT=$(npm view "cnhis-fetch-api-script@$VERSION" gitHead --registry=https://registry.npmjs.org)
+          test -n "$PUBLISHED_COMMIT"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git rev-parse "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            git tag -a "v$VERSION" "$PUBLISHED_COMMIT" -m "发布 v$VERSION"
+          fi
+          git push origin "refs/tags/v$VERSION"

@@ -1,0 +1,19 @@
+{
+  "name": "cnhis-fetch-api-script",
+  "version": "1.0.0",
+  "description": "Generate TypeScript HTTP services and types from Swagger or Apifox",
+  "type": "module",
+  "bin": { "cnhis-fetch-api": "bin/cli.mjs" },
+  "files": ["bin/", "src/", "settings.example.json", "README.md"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "prepublishOnly": "npm test",
+    "release:prepare": "node scripts/release.mjs"
+  },
+  "repository": { "type": "git", "url": "git+https://github.com/YWJ-hy/cnhis-fetch-api-script.git" },
+  "homepage": "https://github.com/YWJ-hy/cnhis-fetch-api-script#readme",
+  "bugs": "https://github.com/YWJ-hy/cnhis-fetch-api-script/issues",
+  "license": "ISC",
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" }
+}

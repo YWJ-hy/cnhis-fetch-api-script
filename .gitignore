@@ -1,0 +1,7 @@
+node_modules/
+*.tgz
+.npmrc
+api.json
+fetch-api.config.json
+settings.json
+coverage/
