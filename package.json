@@ -1,6 +1,6 @@
 {
   "name": "cnhis-fetch-api-script",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Generate TypeScript HTTP services and types from Swagger or Apifox",
   "type": "module",
   "bin": {
