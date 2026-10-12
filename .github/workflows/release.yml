@@ -51,7 +51,13 @@ jobs:
         env:
           VERSION: ${{ steps.prepare.outputs.version }}
         run: |
-          PUBLISHED_COMMIT=$(npm view "cnhis-fetch-api-script@$VERSION" gitHead --registry=https://registry.npmjs.org)
+          # npm can acknowledge publishing before the new version is queryable.
+          PUBLISHED_COMMIT=''
+          for attempt in $(seq 1 30); do
+            PUBLISHED_COMMIT=$(npm view "cnhis-fetch-api-script@$VERSION" gitHead --registry=https://registry.npmjs.org 2>/dev/null) || true
+            if test -n "$PUBLISHED_COMMIT"; then break; fi
+            sleep 10
+          done
           test -n "$PUBLISHED_COMMIT"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
