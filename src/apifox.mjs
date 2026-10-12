@@ -1,9 +1,9 @@
 import { runFetchApiSync, loadSettings, parseTargetUrls } from "./shared.mjs";
 
 // 调用例子：
-//   node scripts/fetch-api/apifox.mjs
-//   node scripts/fetch-api/apifox.mjs --url /imiias/xxx/yyy
-//   APIFOX_TOKEN=xxx node scripts/fetch-api/apifox.mjs --url /imiias/xxx/yyy --keep-api-json
+//   cnhis-fetch-api apifox
+//   cnhis-fetch-api apifox --url /catalog/xxx/yyy
+//   APIFOX_TOKEN=xxx cnhis-fetch-api apifox --url /catalog/xxx/yyy --keep-api-json
 
 const buildApifoxHeaders = apifox => {
   const token = apifox.token;

@@ -84,12 +84,8 @@ const parseCliArgs = settings => {
   // urlRequired 为 true 时保持旧行为：不传 --url 则报错退出
   // 默认 false，不传 --url 则同步全部接口
   if (settings?.urlRequired && !forceUpdateUrls.length) {
-    const scriptName = path.relative(
-      projectRoot,
-      process.argv[1] || "scripts/fetch-api/swagger.mjs",
-    );
     console.error("错误：必须通过 --url 参数指定至少一个接口路径");
-    console.error(`用法：node ${scriptName} --url /xxx/yyy`);
+    console.error("用法：cnhis-fetch-api <swagger|apifox> --url /xxx/yyy");
     process.exit(1);
   }
 

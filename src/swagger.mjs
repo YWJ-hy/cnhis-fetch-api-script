@@ -1,8 +1,8 @@
 import { runFetchApiSync, loadSettings } from "./shared.mjs";
 
 // 调用例子：
-//   node scripts/fetch-api/swagger.mjs --url /financial/xxx/yyy
-//   node scripts/fetch-api/swagger.mjs --url /financial/xxx/yyy --url /financial/aaa/bbb --keep-api-json
+//   cnhis-fetch-api swagger --url /catalog/xxx/yyy
+//   cnhis-fetch-api swagger --url /catalog/xxx/yyy --url /catalog/aaa/bbb --keep-api-json
 
 const fetchSwaggerByUrl = async () => {
   const settings = await loadSettings();

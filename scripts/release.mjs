@@ -3,6 +3,9 @@ import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 export const releaseDecision = (current, published, changed) => {
+  if (published === "0.0.0-stage") {
+    throw new Error("npm is still processing the initial publication. Rerun after the stable version is available.");
+  }
   if (!published) return { version: current, publish: true };
   const parse = value => {
     if (!/^\d+\.\d+\.\d+$/.test(value)) throw new Error(`Unsupported version: ${value}`);
@@ -19,9 +22,16 @@ export const releaseDecision = (current, published, changed) => {
 
 async function main() {
   const pkg = JSON.parse(await readFile("package.json", "utf8"));
-  const response = await fetch(`https://registry.npmjs.org/${pkg.name}/latest`);
-  if (!response.ok && response.status !== 404) throw new Error(`npm registry: ${response.status}`);
-  const published = response.status === 404 ? null : await response.json();
+  let response;
+  let published;
+  for (let attempt = 0; attempt < 12; attempt++) {
+    response = await fetch(`https://registry.npmjs.org/${pkg.name}/latest`);
+    if (!response.ok && response.status !== 404) throw new Error(`npm registry: ${response.status}`);
+    published = response.status === 404 ? null : await response.json();
+    if (published?.version !== "0.0.0-stage") break;
+    console.log("Waiting for npm to finish the initial publication...");
+    await new Promise(resolve => setTimeout(resolve, 10000));
+  }
   let changed = true;
   if (published?.gitHead) {
     // Failure to resolve a published commit must fail loudly, never silently skip a release.
