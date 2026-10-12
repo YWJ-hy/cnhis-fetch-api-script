@@ -13,7 +13,7 @@
     "README.md"
   ],
   "engines": {
-    "node": ">=22"
+    "node": "^22.13.0 || >=24.0.0"
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
@@ -30,5 +30,11 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "8.7.3"
+  },
+  "devDependencies": {
+    "@inquirer/testing": "3.3.14"
   }
 }

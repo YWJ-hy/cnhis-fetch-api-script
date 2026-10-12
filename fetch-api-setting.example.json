@@ -23,7 +23,8 @@
   // 尚未生成的接口仍会新增；--url 也遵守该保护；格式化可能调整排版。
   "ignorePaths": [],
 
-  // 是否强制传 --url。默认 false（不传时全量同步）；本样例设为 true。
+  // 是否必须提供 URL（通过 --url 或交互输入）。默认 false；本样例设为 true。
+  // 未传 --url 会提示输入；false 时空 Enter 全量同步，true 时要求重新输入。
   "urlRequired": true,
 
   // 请求配置透传，整个对象可省略（默认关闭）。

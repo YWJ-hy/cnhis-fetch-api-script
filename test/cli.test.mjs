@@ -32,7 +32,7 @@ test("installed CLI reads consumer config and writes into --cwd, never its insta
   await run("init", "--cwd", project);
   await assert.rejects(run("init", "--cwd", project), /EEXIST/);
   // The generated, fully commented sample must parse and reach CLI validation.
-  await assert.rejects(run("swagger", "--cwd", project), /必须通过 --url/);
+  await assert.rejects(run("swagger", "--cwd", project), /非交互环境请通过 --url/);
   const config = {
     swagger: { url: "https://fixture.invalid" },
     serviceDir: "generated", formatter: "node --version",
@@ -40,7 +40,7 @@ test("installed CLI reads consumer config and writes into --cwd, never its insta
   await fs.writeFile(path.join(project, "fetch-api-setting.json"), JSON.stringify(config));
   const mock = path.join(root, "mock.mjs");
   await fs.writeFile(mock, `globalThis.fetch = async () => ({ok:true,json:async()=>({paths:{"/alpha/items/query":{get:{responses:{200:{schema:{type:"string"}}}}}}})});`);
-  await exec(process.execPath, ["--import", pathToFileURL(mock).href, cli, "swagger", "--cwd", project], {
+  await exec(process.execPath, ["--import", pathToFileURL(mock).href, cli, "--cwd", project, "--url", "/alpha/items/query"], {
     cwd: root, env: { ...process.env, SWAGGER_URL: "" },
   });
   assert.match(await fs.readFile(path.join(project, "generated/alpha/items/index.ts"), "utf8"), /QueryGet/);

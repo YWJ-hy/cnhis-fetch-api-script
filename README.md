@@ -26,13 +26,14 @@ npx cnhis-fetch-api init
 
 `init` 在使用方项目根目录创建固定名称的 `fetch-api-setting.json`，包含每个配置项的用途和默认值；已有文件不会覆盖。也可复制仓库中的 [完整注释样例](./fetch-api-setting.example.json) 并改为该文件名。配置不存在或格式错误时退出。Apifox token 可使用 `APIFOX_TOKEN` 环境变量提供。
 
-运行环境为 Node.js 22 或更高版本，无运行时依赖。目标项目需提供 `httpImport` 指定的默认导出（包含 `get` / `post` 方法，返回 `{ success, data }`）、全局 `Nullable<T>` 和 `ObjectType` 类型，以及 `formatter` 指定的格式化工具。
+运行环境为 Node.js 22.13+（22 系列）或 24+，交互使用 Inquirer。目标项目需提供 `httpImport` 指定的默认导出（包含 `get` / `post` 方法，返回 `{ success, data }`）、全局 `Nullable<T>` 和 `ObjectType` 类型，以及 `formatter` 指定的格式化工具。
 
 ## 使用
 
-以下简写命令要求先按上文安装到项目依赖中。在项目根目录运行（Node.js 22 或更高版本）：
+以下简写命令要求先按上文安装到项目依赖中。在项目根目录运行：
 
 ```sh
+npx cnhis-fetch-api
 npx cnhis-fetch-api swagger --url /catalog/items/query
 npx cnhis-fetch-api apifox --url /catalog/items/query --url /catalog/items/save
 npx cnhis-fetch-api apifox --url /catalog/items/query --keep-api-json
@@ -40,6 +41,10 @@ npx cnhis-fetch-api swagger --cwd ../another-project --url /catalog/items/query
 ```
 
 若未安装到项目依赖，将上述命令中的 `npx cnhis-fetch-api` 替换为 `npx --yes --registry=https://registry.npmjs.org cnhis-fetch-api-script@latest`，其余子命令和参数保持一致。
+
+不传模式时，按照合并环境变量后的配置判断来源：只有 `swagger.url` 或 `apifox.url` 非空时自动选择对应来源；两者都有时显示选择菜单，使用上下键切换、Enter 确认。显式传入 `swagger` 或 `apifox` 时跳过菜单。来源选择按地址判断，Apifox 认证令牌等要求仍会在执行时检查。
+
+未传 `--url` 时显示“请输入url，多个url空格间隔”，输入完整路径后 Enter 继续，例如 `/catalog/items/query /catalog/items/save`。`urlRequired: true` 时空输入会要求重新输入；为 `false` 时空 Enter 表示全量同步。Ctrl+C 取消执行。CI 等非交互环境不会等待输入，需明确提供 `--url`，配置两个来源时还需指定模式。`init`、`--help`、`--version` 不触发此交互。
 
 默认把当前工作目录作为项目根目录，请在使用方项目根目录执行；从其他位置执行时使用 `--cwd` 指定项目根目录。配置只读取该目录的 `fetch-api-setting.json`，文件名不可通过参数更改。输出、`api.json`、格式化命令的工作目录也基于该项目根目录。可在使用项目的 package.json 中配置 `"api:apifox": "cnhis-fetch-api apifox"`。
 
@@ -56,7 +61,7 @@ npx cnhis-fetch-api swagger --cwd ../another-project --url /catalog/items/query
 | `--help` / `-h` | 显示命令帮助 |
 | `--version` / `-v` | 显示已安装版本 |
 
-`urlRequired: true` 时，必须指定至少一个完整接口路径。设为 `false` 或省略时，不传 `--url` 即同步全部接口；传入 URL 时仅更新匹配接口。Git Bash 自动转换成 `C:/Program Files/Git/...` 的路径会还原。
+`urlRequired: true` 时，必须通过参数或交互输入至少一个完整接口路径。设为 `false` 或省略时，可在交互提示中直接按 Enter 同步全部接口；输入 URL 时仅更新匹配接口。Git Bash 自动转换成 `C:/Program Files/Git/...` 的路径会还原。
 
 同步生成 `serviceDir` 下的 `index.ts` 和 `types.d.ts`，然后调用 `formatter` 格式化目录。新接口追加，已有接口按名称更新，命名规则变化时按请求方法和 URL 迁移旧函数与类型。全量模式通常仅更新类型变化的接口；启用 `requestOptions` 时也更新已有函数以补齐参数。`--url` 强制更新所选接口，仍遵守 `ignorePaths`。
 
@@ -71,7 +76,7 @@ npx cnhis-fetch-api swagger --cwd ../another-project --url /catalog/items/query
 | `serviceDir` | string / `src/service2` | 相对于项目根目录的输出目录 |
 | `formatter` | string / `npx oxfmt` | 生成后执行的格式化命令，后面自动追加 serviceDir；使用方须安装对应工具，失败仅警告 |
 | `ignorePaths` | string[] / `[]` | 精确匹配完整 URL，保护已有函数和类型；尚未生成的接口仍新增 |
-| `urlRequired` | boolean / `false` | true 时必须传至少一个 --url；false 且不传时全量同步 |
+| `urlRequired` | boolean / `false` | true 时参数或交互必须提供 URL；false 时交互输入可留空以全量同步 |
 | `requestOptions` | object / 关闭 | 为生成函数配置额外的可选参数及 HTTP 调用透传 |
 | `requestOptions.enabled` | boolean / `false` | 开启额外参数；params 还需包含有效项目 |
 | `requestOptions.typeImport` | string / 同 httpImport | 从哪个模块导入额外参数的类型 |
