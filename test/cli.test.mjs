@@ -24,6 +24,8 @@ test("installed CLI reads consumer config and writes into --cwd, never its insta
   const run = (...args) => exec(process.execPath, [cli, ...args], { cwd: root });
   assert.match((await run("--help")).stdout, /--config/);
   assert.match((await run("--version")).stdout, /^\d+\.\d+\.\d+/);
+  assert.equal((await run("-v")).stdout, (await run("--version")).stdout);
+  assert.equal((await run("-h")).stdout, (await run("--help")).stdout);
   await assert.rejects(run("swagger", "--config"), /Missing value/);
   await assert.rejects(run("swagger", "--unexpected"), /Unknown option/);
   await run("init", "--cwd", project);

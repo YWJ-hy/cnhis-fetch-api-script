@@ -10,16 +10,16 @@ const help = `cnhis-fetch-api <swagger|apifox|init> [options]
   --config <file>    Configuration relative to project root
   --cwd <directory>  Project root (defaults to current directory)
   --keep-api-json    Keep downloaded API definitions
-  --version         Print version
-  --help            Print help
+  --version, -v     Print version
+  --help, -h        Print help
 
 Config: fetch-api.config.json, then scripts/fetch-api/settings.json.
 Set APIFOX_TOKEN in your environment for authenticated exports.`;
 
 try {
-  if (args.includes("--help") || !args.length) {
+  if (args.includes("--help") || args.includes("-h") || !args.length) {
     console.log(help);
-  } else if (args.includes("--version")) {
+  } else if (args.includes("--version") || args.includes("-v")) {
     console.log(JSON.parse(await readFile(new URL("../package.json", import.meta.url))).version);
   } else {
     const [command, ...flags] = args;
