@@ -2,14 +2,14 @@
 
 从 Swagger 或 Apifox 获取接口定义，按模块生成 TypeScript 请求函数和类型声明。
 
-## 安装与迁移
+## 安装
 
 ```sh
 npm install -D cnhis-fetch-api-script --registry=https://registry.npmjs.org
 npx cnhis-fetch-api init
 ```
 
-新项目编辑 `fetch-api.config.json`；已有项目可以直接沿用 `scripts/fetch-api/settings.json`，无需运行 init。优先读取根目录的 `fetch-api.config.json`，也可使用 `--config <file>` 指定配置。配置不存在或格式错误时退出，避免误生成。Apifox token 建议使用 `APIFOX_TOKEN` 环境变量，真实业务配置不包含在 npm 包中。
+`init` 在使用方项目根目录创建固定名称的 `fetch-api-setting.json`，包含每个配置项的用途和默认值；已有文件不会覆盖。也可复制仓库中的 [完整注释样例](./fetch-api-setting.example.json) 并改为该文件名。配置不存在或格式错误时退出。Apifox token 可使用 `APIFOX_TOKEN` 环境变量提供。
 
 运行环境为 Node.js 22 或更高版本，无运行时依赖。目标项目需提供 `httpImport` 指定的默认导出（包含 `get` / `post` 方法，返回 `{ success, data }`）、全局 `Nullable<T>` 和 `ObjectType` 类型，以及 `formatter` 指定的格式化工具。
 
@@ -21,12 +21,23 @@ npx cnhis-fetch-api init
 npx cnhis-fetch-api swagger --url /catalog/items/query
 npx cnhis-fetch-api apifox --url /catalog/items/query --url /catalog/items/save
 npx cnhis-fetch-api apifox --url /catalog/items/query --keep-api-json
-npx cnhis-fetch-api swagger --cwd ../another-project --config config/api.json
+npx cnhis-fetch-api swagger --cwd ../another-project --url /catalog/items/query
 ```
 
-输出、`api.json`、格式化命令的工作目录均相对于调用项目根目录（默认当前工作目录，或 `--cwd`），不会写入 node_modules。`--config` 相对于该项目根目录。可在使用项目的 package.json 中配置 `"api:apifox": "cnhis-fetch-api apifox"`。
+默认把当前工作目录作为项目根目录，请在使用方项目根目录执行；从其他位置执行时使用 `--cwd` 指定项目根目录。配置只读取该目录的 `fetch-api-setting.json`，文件名不可通过参数更改。输出、`api.json`、格式化命令的工作目录也基于该项目根目录。可在使用项目的 package.json 中配置 `"api:apifox": "cnhis-fetch-api apifox"`。
 
-迁移完成后，原 `scripts/fetch-api` 可只保留 `settings.json`，工具源码统一在本仓库维护。
+从早期版本迁移时，将原配置内容保存到项目根目录的 `fetch-api-setting.json`；旧 `fetch-api.config.json`、`scripts/fetch-api/settings.json` 和 `--config` 不再支持。
+
+| 命令或参数 | 功能 |
+| --- | --- |
+| `init` | 创建带注释的配置文件，已有文件时退出 |
+| `swagger` | 下载 Swagger JSON 并生成请求函数及类型 |
+| `apifox` | 导出 Apifox 接口并生成请求函数及类型 |
+| `--url <path>` | 按完整路径选择接口，可重复传入多个；同路径 GET/POST 都会处理 |
+| `--cwd <directory>` | 指定使用项目根目录，默认当前工作目录 |
+| `--keep-api-json` | 保留下载到项目根目录的 api.json，默认同步结束后删除 |
+| `--help` / `-h` | 显示命令帮助 |
+| `--version` / `-v` | 显示已安装版本 |
 
 `urlRequired: true` 时，必须指定至少一个完整接口路径。设为 `false` 或省略时，不传 `--url` 即同步全部接口；传入 URL 时仅更新匹配接口。Git Bash 自动转换成 `C:/Program Files/Git/...` 的路径会还原。
 
@@ -34,7 +45,38 @@ npx cnhis-fetch-api swagger --cwd ../another-project --config config/api.json
 
 ## 配置
 
-`settings.json` 支持注释。`SWAGGER_URL`、`APIFOX_URL`、`APIFOX_TOKEN` 环境变量优先于文件中的对应值。下文地址、路径和 ID 均为示例，应按目标项目替换。
+`fetch-api-setting.json` 支持 `//`、`/* */` 注释，不支持尾随逗号。下表中的默认值是省略配置时的行为；样例可能使用不同值来展示用法。所有地址、模块路径和 ID 均为示例，应按使用项目替换。
+
+| 配置项 | 类型 / 默认值 | 功能与使用条件 |
+| --- | --- | --- |
+| `contextFixed` | boolean / `false` | 是否剥离已配置的 URL 上下文来决定输出目录；优先于 `context.fixed` |
+| `httpImport` | string / `@/common/utils/http` | 生成函数使用的 HTTP 默认导出模块路径 |
+| `serviceDir` | string / `src/service2` | 相对于项目根目录的输出目录 |
+| `formatter` | string / `npx oxfmt` | 生成后执行的格式化命令，后面自动追加 serviceDir；使用方须安装对应工具，失败仅警告 |
+| `ignorePaths` | string[] / `[]` | 精确匹配完整 URL，保护已有函数和类型；尚未生成的接口仍新增 |
+| `urlRequired` | boolean / `false` | true 时必须传至少一个 --url；false 且不传时全量同步 |
+| `requestOptions` | object / 关闭 | 为生成函数配置额外的可选参数及 HTTP 调用透传 |
+| `requestOptions.enabled` | boolean / `false` | 开启额外参数；params 还需包含有效项目 |
+| `requestOptions.typeImport` | string / 同 httpImport | 从哪个模块导入额外参数的类型 |
+| `requestOptions.params` | object[] / `[]` | 额外参数列表，顺序决定 HTTP 调用参数的顺序 |
+| `requestOptions.params[].name` | string / 无 | JS 参数标识符，如 config；不得重复或与业务参数 params 冲突 |
+| `requestOptions.params[].type` | string / 无 | typeImport 导出的类型名称，如 AxiosRequestConfig；不支持复杂类型表达式 |
+| `swagger` | object / `{}` | Swagger 命令配置，Apifox 命令不需要 |
+| `swagger.url` | string / 无 | Swagger JSON 地址，执行 swagger 时必须提供（或设置 SWAGGER_URL） |
+| `swagger.module` | string 或 string[] / 无 | contextFixed=true 时从路径中剥离的上下文 |
+| `apifox` | object / `{}` | Apifox 命令配置，Swagger 命令不需要 |
+| `apifox.url` | string / 无 | Apifox 导出地址，执行 apifox 时必须提供（或设置 APIFOX_URL） |
+| `apifox.apiVersion` | string / `2024-03-28` | X-Apifox-Api-Version 请求头 |
+| `apifox.token` | string / 无 | Apifox 认证令牌，执行 apifox 时必须提供（或设置 APIFOX_TOKEN） |
+| `apifox.environmentIds` | ID 数组 / `[]` | 导出使用的环境 ID，不指定时发送空数组 |
+| `apifox.selectedFolderIds` | ID 数组或分组对象 / `[]` | 导出的文件夹，数组单次导出；对象按键名分组并补上下文前缀，每个值必须为数组。建议明确填写实际 ID；空列表行为由 Apifox 决定 |
+| `context` | object / `{}` | 兼容字段，新配置推荐使用 contextFixed 及来源模块字段 |
+| `context.fixed` | boolean / `false` | contextFixed 未配置时的后备值 |
+| `context.module` | string 或 string[] / `[]` | 来源未配置模块时的后备上下文，只影响目录，不为 Apifox 数组模式补 URL |
+
+`SWAGGER_URL`、`APIFOX_URL`、`APIFOX_TOKEN` 的非空环境变量分别覆盖 `swagger.url`、`apifox.url`、`apifox.token`。环境变量不会代替配置文件本身，固定配置文件仍须存在。
+
+对于使用 `||` 默认值的字符串配置，空字符串会使用默认值。额外参数中名称格式不合法或类型为空的条目会被过滤；请按样例配置有效的类型导出与互不冲突的参数名。
 
 ### Apifox 文件夹
 
@@ -103,7 +145,7 @@ npm pack --dry-run
 
 ## 自动版本与 npm 发布
 
-推送到 `main` 且修改 `src/**`、`bin/**`、`settings.example.json`、`package.json` 或 `package-lock.json` 时，`.github/workflows/release.yml` 自动执行测试，对照 npm 已发布版本与 gitHead 检测变化，递增 patch 版本，将版本提交推回 main，发布 npm 并创建版本标签。无需特定提交前缀；功能修改也默认递增 patch。需要 minor/major 时，提前修改 package.json 及 package-lock.json 的版本。
+推送到 `main` 且修改 `src/**`、`bin/**`、`fetch-api-setting.example.json`、`package.json` 或 `package-lock.json` 时，`.github/workflows/release.yml` 自动执行测试，对照 npm 已发布版本与 gitHead 检测变化，递增 patch 版本，将版本提交推回 main，发布 npm 并创建版本标签。无需特定提交前缀；功能修改也默认递增 patch。需要 minor/major 时，提前修改 package.json 及 package-lock.json 的版本。
 
 发布串行执行，不取消正在进行的发布。机器人版本提交使用 GITHUB_TOKEN，不会再次触发 workflow。发布前 push 遇到并发提交时失败，不强推；重新运行 workflow 会使用最新 main。npm 发布失败时可重跑，复用已准备的版本；发布成功但标签步骤失败时，手动运行 workflow 会补齐标签。仅文档/测试修改不发布；可从 Actions 手动运行 Release npm 进行恢复。
 

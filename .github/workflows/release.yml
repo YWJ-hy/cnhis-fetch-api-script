@@ -5,7 +5,7 @@ on:
     paths:
       - 'src/**'
       - 'bin/**'
-      - 'settings.example.json'
+      - 'fetch-api-setting.example.json'
       - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:

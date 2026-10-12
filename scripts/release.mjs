@@ -36,7 +36,7 @@ async function main() {
   if (published?.gitHead) {
     // Failure to resolve a published commit must fail loudly, never silently skip a release.
     const diff = execFileSync("git", ["diff", "--name-only", published.gitHead, "HEAD", "--",
-      "src", "bin", "settings.example.json", "package.json", "package-lock.json"], { encoding: "utf8" });
+      "src", "bin", "fetch-api-setting.example.json", "package.json", "package-lock.json"], { encoding: "utf8" });
     changed = Boolean(diff.trim());
   }
   const decision = releaseDecision(pkg.version, published?.version, changed);

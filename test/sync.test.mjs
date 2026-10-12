@@ -64,7 +64,7 @@ const fixture = async (t, settings = {}) => {
     async run(source, replies, args = [], patch = {}) {
       config = { ...config, ...patch };
       await fs.writeFile(
-        path.join(dir, "settings.json"),
+        path.join(root, "fetch-api-setting.json"),
         `// JSONC config\n${JSON.stringify(config)}`,
       );
       await fs.writeFile(path.join(root, "replies.json"), JSON.stringify(replies));

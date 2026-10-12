@@ -7,7 +7,7 @@ import { runFetchApiSync, loadSettings } from "./shared.mjs";
 const fetchSwaggerByUrl = async () => {
   const settings = await loadSettings();
   const url = settings.swagger?.url;
-  if (!url) throw new Error("未配置 swagger.url，请检查 settings.json");
+  if (!url) throw new Error("未配置 swagger.url，请检查 fetch-api-setting.json");
 
   const response = await fetch(url);
   if (!response.ok) {

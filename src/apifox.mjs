@@ -7,7 +7,7 @@ import { runFetchApiSync, loadSettings, parseTargetUrls } from "./shared.mjs";
 
 const buildApifoxHeaders = apifox => {
   const token = apifox.token;
-  if (!token) throw new Error("缺少 apifox.token 配置（settings.json 或 APIFOX_TOKEN 环境变量）");
+  if (!token) throw new Error("缺少 apifox.token 配置（fetch-api-setting.json 或 APIFOX_TOKEN 环境变量）");
   return {
     "X-Apifox-Api-Version": apifox.apiVersion || "2024-03-28",
     Authorization: `Bearer ${token}`,
@@ -89,12 +89,12 @@ const fetchSwaggerByApifox = async () => {
   const settings = await loadSettings();
   const apifox = settings.apifox || {};
   const url = apifox.url;
-  if (!url) throw new Error("未配置 apifox.url，请检查 settings.json");
+  if (!url) throw new Error("未配置 apifox.url，请检查 fetch-api-setting.json");
 
   const selectedFolderIds = apifox.selectedFolderIds || [];
   const grouped = !Array.isArray(selectedFolderIds);
   const contexts = grouped ? Object.entries(selectedFolderIds) : [["", selectedFolderIds]];
-  if (!contexts.length) throw new Error("未配置 apifox.selectedFolderIds，请检查 settings.json");
+  if (!contexts.length) throw new Error("未配置 apifox.selectedFolderIds，请检查 fetch-api-setting.json");
   for (const [context, folderIds] of contexts) {
     if (!Array.isArray(folderIds))
       throw new Error(`apifox.selectedFolderIds[${context}] 必须为数组`);

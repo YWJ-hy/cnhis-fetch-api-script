@@ -1,0 +1,79 @@
+{
+  // 配置文件支持 // 和 /* */ 注释，不支持尾随逗号。
+  // 将本文件复制为使用项目根目录的 fetch-api-setting.json，或执行 cnhis-fetch-api init。
+
+  // 是否剥离 URL 上下文作为输出目录。默认 false。
+  // false: /catalog/items/query -> catalog/items；true 且匹配 catalog 上下文时 -> items。
+  "contextFixed": false,
+
+  // 生成代码中的 HTTP 默认导出模块路径。默认 @/common/utils/http。
+  // 该模块需提供 get/post，返回 { success, data }。
+  "httpImport": "@/utils/http",
+
+  // 生成 index.ts 和 types.d.ts 的目录，相对于使用项目根目录。默认 src/service2。
+  "serviceDir": "src/service2",
+
+  // 生成后执行的格式化命令，脚本在末尾追加 serviceDir；执行目录为使用项目根目录。
+  // 默认 npx oxfmt；使用方需安装对应格式化器。失败会警告，但不撤销生成文件。
+  "formatter": "npx oxfmt",
+
+  // 已有接口不更新、不重命名的完整 URL 列表。默认 []。
+  // 尚未生成的接口仍会新增；--url 也遵守该保护；格式化可能调整排版。
+  "ignorePaths": [],
+
+  // 是否强制传 --url。默认 false（不传时全量同步）；本样例设为 true。
+  "urlRequired": true,
+
+  // 请求配置透传，整个对象可省略（默认关闭）。
+  "requestOptions": {
+    // true 时为生成函数增加以下可选参数，并按顺序透传给 http.get/post。
+    "enabled": false,
+    // 额外参数的类型导入路径，省略时使用 httpImport。
+    "typeImport": "@/utils/http",
+    // 默认 []。启用且至少有一个有效参数时才生效；参数名不得重复或与 params 冲突。
+    "params": [
+      {
+        // 有效 JS 标识符，生成可选参数 config?。
+        "name": "config",
+        // typeImport 模块导出的类型名称（不填写泛型表达式、联合类型或 import 语句）。
+        "type": "AxiosRequestConfig"
+      },
+      { "name": "otherConfig", "type": "OtherConfig" }
+    ]
+  },
+
+  // 运行 swagger 命令时使用；运行 apifox 时可省略。
+  "swagger": {
+    // Swagger JSON 地址；运行 swagger 时必需，可被非空 SWAGGER_URL 环境变量覆盖。
+    "url": "https://example.com/v2/api-docs",
+    // contextFixed=true 时要剥离的上下文；字符串或字符串数组，默认无。
+    "module": "catalog"
+  },
+
+  // 运行 apifox 命令时使用；运行 swagger 时可省略。
+  "apifox": {
+    // Apifox 导出地址，将 YOUR_PROJECT_ID 替换为项目 ID；可被非空 APIFOX_URL 覆盖。
+    "url": "https://api.apifox.com/v1/projects/YOUR_PROJECT_ID/export-openapi?locale=zh-CN",
+    // Apifox API 版本请求头，默认 2024-03-28。
+    "apiVersion": "2024-03-28",
+    // 导出认证令牌；运行 apifox 时必需，建议通过 APIFOX_TOKEN 环境变量提供。
+    // 非空 APIFOX_TOKEN 优先于本字段；不要将真实令牌提交到公开仓库。
+    "token": "",
+    // 导出环境 ID 列表，默认 []（不指定环境）。
+    "environmentIds": [],
+    // 两种格式：数组 [10001,10002] 单次导出且不补上下文；
+    // 或如下对象，逐组导出并补 /catalog、/orders 前缀，同名前缀不会重复。
+    // 分组键也用于 contextFixed=true 时识别上下文；每个分组值必须为数组。
+    // 默认 []，表示不显式列出文件夹；建议填写需要导出的实际文件夹 ID。
+    "selectedFolderIds": { "catalog": [10001], "orders": [10002] }
+  },
+
+  // 兼容字段，新配置推荐使用 contextFixed 和 swagger.module / Apifox 分组键。
+  "context": {
+    // 默认 false，仅当 contextFixed 未配置时生效。
+    "fixed": false,
+    // 字符串或字符串数组，默认 []；来源未配置上下文时使用的后备值。
+    // 仅影响输出目录，不会给 Apifox 数组模式的 URL 添加前缀。
+    "module": []
+  }
+}

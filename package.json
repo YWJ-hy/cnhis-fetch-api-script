@@ -9,7 +9,7 @@
   "files": [
     "bin/",
     "src/",
-    "settings.example.json",
+    "fetch-api-setting.example.json",
     "README.md"
   ],
   "engines": {

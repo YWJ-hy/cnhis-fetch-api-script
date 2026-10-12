@@ -5,3 +5,4 @@ api.json
 fetch-api.config.json
 settings.json
 coverage/
+fetch-api-setting.json

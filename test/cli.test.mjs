@@ -15,34 +15,40 @@ test("installed CLI reads consumer config and writes into --cwd, never its insta
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const installation = path.join(root, "node_modules/cnhis-fetch-api-script");
   await fs.mkdir(installation, { recursive: true });
-  for (const entry of ["src", "bin", "package.json", "settings.example.json"]) {
+  for (const entry of ["src", "bin", "package.json", "fetch-api-setting.example.json"]) {
     await fs.cp(path.join(packageRoot, entry), path.join(installation, entry), { recursive: true });
   }
   const project = path.join(root, "consumer");
   await fs.mkdir(project);
   const cli = path.join(installation, "bin/cli.mjs");
   const run = (...args) => exec(process.execPath, [cli, ...args], { cwd: root });
-  assert.match((await run("--help")).stdout, /--config/);
+  assert.match((await run("--help")).stdout, /fetch-api-setting.json/);
   assert.match((await run("--version")).stdout, /^\d+\.\d+\.\d+/);
   assert.equal((await run("-v")).stdout, (await run("--version")).stdout);
   assert.equal((await run("-h")).stdout, (await run("--help")).stdout);
-  await assert.rejects(run("swagger", "--config"), /Missing value/);
+  await assert.rejects(run("swagger", "--cwd"), /Missing value/);
+  await assert.rejects(run("swagger", "--config", "custom.json"), /Unknown option/);
   await assert.rejects(run("swagger", "--unexpected"), /Unknown option/);
   await run("init", "--cwd", project);
   await assert.rejects(run("init", "--cwd", project), /EEXIST/);
+  // The generated, fully commented sample must parse and reach CLI validation.
+  await assert.rejects(run("swagger", "--cwd", project), /必须通过 --url/);
   const config = {
     swagger: { url: "https://fixture.invalid" },
     serviceDir: "generated", formatter: "node --version",
   };
-  await fs.writeFile(path.join(project, "custom.json"), JSON.stringify(config));
+  await fs.writeFile(path.join(project, "fetch-api-setting.json"), JSON.stringify(config));
   const mock = path.join(root, "mock.mjs");
   await fs.writeFile(mock, `globalThis.fetch = async () => ({ok:true,json:async()=>({paths:{"/alpha/items/query":{get:{responses:{200:{schema:{type:"string"}}}}}}})});`);
-  await exec(process.execPath, ["--import", pathToFileURL(mock).href, cli, "swagger", "--cwd", project, "--config", "custom.json"], {
+  await exec(process.execPath, ["--import", pathToFileURL(mock).href, cli, "swagger", "--cwd", project], {
     cwd: root, env: { ...process.env, SWAGGER_URL: "" },
   });
   assert.match(await fs.readFile(path.join(project, "generated/alpha/items/index.ts"), "utf8"), /QueryGet/);
   await assert.rejects(fs.access(path.join(installation, "generated")), { code: "ENOENT" });
-  await assert.rejects(run("swagger", "--cwd", project, "--config", "missing.json"), /读取配置失败/);
-  await fs.writeFile(path.join(project, "custom.json"), "{ invalid");
-  await assert.rejects(run("swagger", "--cwd", project, "--config", "custom.json"), /读取配置失败/);
+  await fs.rename(path.join(project, "fetch-api-setting.json"), path.join(project, "fetch-api.config.json"));
+  await fs.mkdir(path.join(project, "scripts/fetch-api"), { recursive: true });
+  await fs.writeFile(path.join(project, "scripts/fetch-api/settings.json"), JSON.stringify(config));
+  await assert.rejects(run("swagger", "--cwd", project), /读取配置失败/);
+  await fs.writeFile(path.join(project, "fetch-api-setting.json"), "{ invalid");
+  await assert.rejects(run("swagger", "--cwd", project), /读取配置失败/);
 });

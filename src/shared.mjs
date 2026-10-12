@@ -18,26 +18,17 @@ const optionValue = name => {
 const projectRoot = path.resolve(optionValue("--cwd") || process.cwd());
 
 /**
- * 读取并解析 settings.json 配置，自动合并环境变量。
+ * 读取并解析 fetch-api-setting.json 配置，自动合并环境变量。
  *
  * 动机与设计选择：
- * 1. 兼容性与容错性：原始 settings.json 允许包含 JavaScript 风格的注释（如单行 // 和多行 /*），
+ * 1. 兼容性与容错性：原始 fetch-api-setting.json 允许包含 JavaScript 风格的注释（如单行 // 和多行 /*），
  *    但原生 JSON.parse 无法直接解析带注释的文本。为了避免开发者配置注释时发生解析失败，
  *    在解析前使用正则表达式将多行与单行注释剥离。
  * 2. 错误透明度：避免单纯吞掉所有异常，若读取或解析失败，显式打印出异常原因（如 JSON 语法错误），
  *    以便开发者能快速定位到具体的配置错误位置。
  */
 const loadSettings = async () => {
-  const configuredPath = optionValue("--config");
-  let settingsPath = path.resolve(projectRoot, configuredPath || "fetch-api.config.json");
-  if (!configuredPath) {
-    try {
-      await fs.access(settingsPath);
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-      settingsPath = path.join(projectRoot, "scripts/fetch-api/settings.json");
-    }
-  }
+  const settingsPath = path.join(projectRoot, "fetch-api-setting.json");
   let settings = {};
   try {
     const raw = await fs.readFile(settingsPath, "utf-8");
@@ -425,7 +416,7 @@ const detectChangedEndpoints = (candidates, existingTypesContent, swagger) => {
 };
 
 /**
- * 从 index.ts 中提取每个导出函数的「请求方式 + URL」唯一键（如 `post /imiias/rules/aiOptimize`）。
+ * 从 index.ts 中提取每个导出函数的「请求方式 + URL」唯一键（如 `post /catalog/items/query`）。
  * 用于检测同一 (方法, URL) 的 functionName 是否因命名规则变更而需要重命名。
  *
  * 注意：请求方式取自函数名后缀（Get/Post/Put/Delete/Patch），而非 http.xxx。
